@@ -1,5 +1,9 @@
 # Event Manager
 
+## What is Event Manager?
 
-### How to run:
-docker compose up -d 
+
+### How to run it from command line:
+```
+docker compose up -d
+```
