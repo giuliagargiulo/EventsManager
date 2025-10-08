@@ -9,8 +9,8 @@ CREATE TABLE Events(
 
 CREATE TABLE Participants(
     id SERIAL PRIMARY KEY,
-    first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    surname VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     phone VARCHAR(15) UNIQUE NOT NULL
 );
@@ -32,7 +32,7 @@ INSERT INTO Events (name, location, date, start_time, end_time) VALUES
 ('Art Workshop', 'San Francisco', '2024-10-20', '10:00', '15:00'),
 ('Music Festival', 'Los Angeles', '2024-11-05', '12:00', '22:00');
 
-INSERT INTO Participants (first_name, last_name, email, phone) VALUES
+INSERT INTO Participants (name, surname, email, phone) VALUES
 ('John', 'Doe', 'john.doe@example.com', '123-456-7890'),
 ('Jane', 'Smith', 'jane.smith@example.com', '098-765-4321'),
 ('Alice', 'Johnson', 'alice.johnson@example.com', '555-123-4567'),
