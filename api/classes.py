@@ -11,4 +11,5 @@ class Participant(BaseModel):
     name: str
     surname: str
     email: str
+    phone: str
     
