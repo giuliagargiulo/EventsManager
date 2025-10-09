@@ -7,6 +7,8 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/eventsdb
     depends_on:
       - db
+    volumes:
+      - ./files:/app/files
 
   db:
     image: postgres:16

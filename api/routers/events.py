@@ -1,16 +1,22 @@
 from fastapi import APIRouter, Depends
+import os
 from api import classes
 from api import models
 from api.database import get_db
 from sqlalchemy.orm import Session
+import os
 
 router = APIRouter(prefix="/events", tags=["events"])
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+FILES_DIR = os.path.join(BASE_DIR, "files")
 
 # Save an event on a text file
 
 @router.post("/save-to-file")
 def save_event_to_file(event: classes.Event):
-    with open("../events.txt", "a") as f:
+    file_path = os.path.join(FILES_DIR, "events.txt")
+    with open(file_path, "a") as f:
         f.write(f"Event:{event.name} Date:{event.date} Location:{event.location} "
                 f"Start Time:{event.start_time} End Time:{event.end_time}\n")
         return {"message": "Event saved to file successfully."}
@@ -19,7 +25,9 @@ def save_event_to_file(event: classes.Event):
 
 @router.post("/convert-file")
 def convert_csv_to_txt():
-    with open("../events.csv", "r") as csv_f, open("../events.txt", "a") as txt_f:
+    csv_file_path = os.path.join(FILES_DIR, "events.csv")
+    txt_file_path = os.path.join(FILES_DIR, "events.txt")
+    with open(csv_file_path, "r") as csv_f, open(txt_file_path, "a") as txt_f:
         for line in csv_f:
             txt_f.write(line.replace(",", " "))
     return {"message": "CSV file converted to TXT successfully."}
