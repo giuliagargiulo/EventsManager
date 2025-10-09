@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .. import classes
+from api import classes
 
 router = APIRouter(tags=["base"])
 
