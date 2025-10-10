@@ -17,7 +17,7 @@ FILES_DIR = os.path.join(BASE_DIR, "files")
 def save_event_to_file(event: classes.Event):
     file_path = os.path.join(FILES_DIR, "events.txt")
     with open(file_path, "a") as f:
-        f.write(f"Event:{event.name} Date:{event.date} Location:{event.location} "
+        f.write(f"Event:{event.name} Date:{event.event_date} Location:{event.location} "
                 f"Start Time:{event.start_time} End Time:{event.end_time}\n")
         return {"message": "Event saved to file successfully."}
 
@@ -39,7 +39,7 @@ def convert_csv_to_txt():
 def create_event(event: classes.Event, db: Session = Depends(get_db)):
     db_event = models.Event(
         name=event.name,
-        date=event.date,
+        event_date=event.event_date,
         location=event.location,
         start_time=event.start_time,
         end_time=event.end_time)
@@ -70,7 +70,7 @@ def update_event(event_id: int, event: classes.Event, db: Session = Depends(get_
     if not db_event:
         return {"error": "Event not found"}
     db_event.name = event.name
-    db_event.date = event.date
+    db_event.event_date = event.event_date
     db_event.location = event.location
     db_event.start_time = event.start_time
     db_event.end_time = event.end_time
