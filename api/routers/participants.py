@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
 from api import classes
-from api import models
 from api.database import get_db
+from asyncpg import Connection
+
 
 router = APIRouter(prefix="/participants", tags=["participants"])
 
@@ -10,50 +10,37 @@ router = APIRouter(prefix="/participants", tags=["participants"])
 # CREATE
 
 @router.post("/")
-def create_participant(participant: classes.Participant, db: Session = Depends(get_db)):
-    db_participant = models.Participant(
-        name=participant.name,
-        surname=participant.surname,
-        email=participant.email,
-        phone=participant.phone
-    )
-    db.add(db_participant)
-    db.commit()
-    db.refresh(db_participant)
-    return db_participant
-
+async def create_participant(participant: classes.Participant, db: Connection = Depends(get_db)):
+    query = "INSERT INTO participants (first_name, last_name, email, phone) VALUES ($1, $2, $3, $4) RETURNING id;"
+    row = await db.fetchrow(query, participant.first_name, participant.last_name, participant.email, participant.phone)
+    return {"message": "Participant created successfully", "id": row['id']}
+    
 # READ
 @router.get("/")
-def get_participants(db: Session = Depends(get_db)):
-    return db.query(models.Participant).all()
+async def get_participants(db: Connection = Depends(get_db)):
+    return await db.fetch("SELECT * FROM participants;")
 
 @router.get("/{participant_id}")
-def get_participant(participant_id: int, db: Session = Depends(get_db)):
-    db_participant = db.query(models.Participant).filter(models.Participant.id == participant_id).first()
-    if db_participant is None:
-        return {"error": "Participant not found"}
-    return db_participant
+async def get_participant(participant_id: int, db: Connection = Depends(get_db)):
+    participant = await db.fetchrow("SELECT * FROM participants WHERE id = $1", participant_id)
+    if not participant:
+        return {"Error": "Participant not found"}
+    return participant
 
 # UPDATE
 @router.put("/{participant_id}")
-def update_participant(participant_id: int, updated_participant: classes.Participant, db: Session = Depends(get_db)):
-    db_participant = db.query(models.Participant).filter(models.Participant.id == participant_id).first()
-    if db_participant is None:
-        return {"error": "Participant not found"}
-    db_participant.name = updated_participant.name
-    db_participant.surname = updated_participant.surname
-    db_participant.email = updated_participant.email
-    db_participant.phone = updated_participant.phone
-    db.commit()
-    db.refresh(db_participant)
-    return db_participant
+async def update_participant(participant_id: int, updated_participant: classes.Participant, db: Connection = Depends(get_db)):
+    query = """
+        UPDATE participants SET first_name = $1, last_name = $2, email = $3, phone = $4 WHERE id = $5
+    """
+    values = (updated_participant.first_name, updated_participant.last_name, updated_participant.email, updated_participant.phone, participant_id)
+    row = await db.fetchrow(query, *values)
+    print({"message": "Participant updated successfully"})
+    return dict(row)
 
 # DELETE
 @router.delete("/{participant_id}")
-def delete_participant(participant_id: int, db: Session = Depends(get_db)):
-    db_participant = db.query(models.Participant).filter(models.Participant.id == participant_id).first()
-    if db_participant is None:
-        return {"error": "Participant not found"}
-    db.delete(db_participant)
-    db.commit()
+async def delete_participant(participant_id: int, db: Connection = Depends(get_db)):
+    query = "DELETE FROM participants WHERE id = $1"
+    await db.execute(query, (participant_id,))
     return {"message": "Participant deleted successfully"}

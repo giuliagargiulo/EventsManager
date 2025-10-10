@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends
 import os
 from api import classes
-from api import models
 from api.database import get_db
-from sqlalchemy.orm import Session
-import os
+from asyncpg import Connection
+
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -36,54 +35,44 @@ def convert_csv_to_txt():
 # CREATE
 
 @router.post("/")
-def create_event(event: classes.Event, db: Session = Depends(get_db)):
-    db_event = models.Event(
-        name=event.name,
-        event_date=event.event_date,
-        location=event.location,
-        start_time=event.start_time,
-        end_time=event.end_time)
-    db.add(db_event)
-    db.commit()
-    db.refresh(db_event)
-    return db_event
+async def create_event(event: classes.Event, db: Connection = Depends(get_db)):
+    query = "INSERT INTO events (name, event_date, location, start_time, end_time) VALUES ($1, $2, $3, $4, $5) RETURNING id;"
+    row = await db.fetchrow(query, event.name, event.event_date, event.location, event.start_time, event.end_time)
+    return {"message": "Event created successfully", "id": row['id']}
 
 # READ
 
 @router.get("/")
-def get_events(db: Session = Depends(get_db)):
-    return db.query(models.Event).all()
+async def get_events(db: Connection = Depends(get_db)):
+    return await db.fetch("SELECT * FROM events;")
 
 
 @router.get("/{event_id}")
-def get_event(event_id: int, db: Session = Depends(get_db)):
-    event = db.query(models.Event).filter(models.Event.id == event_id).first()
-    if event is None:
-        return {"error": "Event not found"}
+async def get_event(event_id: int, db: Connection = Depends(get_db)):
+    event = await db.fetchrow("SELECT * FROM events WHERE id = $1", event_id)
+    if not event:
+        return {"Error": "Event not found"}
     return event
-
+    
 # UPDATE
 
 @router.put("/{event_id}")
-def update_event(event_id: int, event: classes.Event, db: Session = Depends(get_db)):
-    db_event = db.query(models.Event).filter(models.Event.id == event_id).first()
+async def update_event(event_id: int, event: classes.Event, db: Connection = Depends(get_db)):
+    db_event = await db.fetchrow("SELECT * FROM events WHERE id = $1", event_id)
     if not db_event:
-        return {"error": "Event not found"}
-    db_event.name = event.name
-    db_event.event_date = event.event_date
-    db_event.location = event.location
-    db_event.start_time = event.start_time
-    db_event.end_time = event.end_time
-    return db_event
-
+        return {"Error": "Event not found"}
+    query = """
+        UPDATE events SET name = $1, event_date = $2, location = $3,
+        start_time = $4, end_time = $5 WHERE id = $6
+    """
+    values = (event.name, event.event_date, event.location, event.start_time, event.end_time, event_id)
+    db.execute(query, *values)
+    return {"message": "Event updated successfully"}
 
 # DELETE
 
 @router.delete("/{event_id}")
-def delete_event(event_id: int, db: Session = Depends(get_db)):
-    db_event = db.query(models.Event).filter(models.Event.id == event_id).first()
-    if not db_event:
-        return {"error": "Event not found"}
-    db.delete(db_event)
-    db.commit()
+async def delete_event(event_id: int, db: Connection = Depends(get_db)):
+    query = "DELETE FROM events WHERE id = $1"
+    await db.execute(query, (event_id,))
     return {"message": "Event deleted successfully"}
