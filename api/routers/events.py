@@ -44,7 +44,9 @@ async def create_event(event: classes.Event, db: Connection = Depends(get_db)):
              response_description="A list of events in JSON format",
              response_model=List[classes.Event])
 async def get_events(db: Connection = Depends(get_db)):
-    return await db.fetch("SELECT * FROM events;")
+    records = await db.fetch("SELECT * FROM events;")
+    return [dict(record) for record in records]
+
 
 
 @router.get("/{event_id}",
@@ -56,7 +58,7 @@ async def get_event(event_id: int, db: Connection = Depends(get_db)):
     event = await db.fetchrow("SELECT * FROM events WHERE id = $1", event_id)
     if not event:
         return {"Error": "Event not found"}
-    return event
+    return dict(event)
     
 # UPDATE
 
@@ -83,6 +85,9 @@ async def update_event(event_id: int, event: classes.Event, db: Connection = Dep
              description="Delete an event from the database",
              response_description="A message indicating the result of the deletion operation")
 async def delete_event(event_id: int, db: Connection = Depends(get_db)):
+    db_event = await db.fetchrow("SELECT * FROM events WHERE id = $1", event_id)
+    if not db_event:
+        return {"Error": "Event not found"}
     query = "DELETE FROM events WHERE id = $1"
-    await db.execute(query, (event_id,))
+    await db.execute(query, event_id)
     return {"message": "Event deleted successfully"}

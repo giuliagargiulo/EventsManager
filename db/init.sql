@@ -2,7 +2,7 @@ CREATE TABLE Events(
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     location VARCHAR(255) NOT NULL,
-    date DATE NOT NULL,
+    event_date DATE NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL
 );
@@ -27,7 +27,7 @@ CREATE TABLE EventsParticipants(
 );
 
 
-INSERT INTO Events (name, location, date, start_time, end_time) VALUES
+INSERT INTO Events (name, location, event_date, start_time, end_time) VALUES
 ('Tech Conference', 'New York', '2024-09-15', '09:00', '17:00'),
 ('Art Workshop', 'San Francisco', '2024-10-20', '10:00', '15:00'),
 ('Music Festival', 'Los Angeles', '2024-11-05', '12:00', '22:00');
