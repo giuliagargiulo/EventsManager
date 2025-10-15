@@ -1,18 +1,21 @@
 services:
   api:
     build: .
+    restart: unless-stopped
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - pgdb
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - BASE_DIR=/app
+      - FILES_DIR=/app/files
     volumes:
       - ./files:/app/files
 
-  db:
-    image: postgres:16
-    restart: always
+  pgdb:
+    image: postgres:18
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -20,4 +23,5 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./api/routers/event/event.sql:/docker-entrypoint-initdb.d/event.sql
+      - ./api/routers/participant/participant.sql:/docker-entrypoint-initdb.d/participant.sql

@@ -1,5 +1,8 @@
 from fastapi import APIRouter
-from api import classes
+import os
+
+BASE_DIR = os.getenv("BASE_DIR", "/app")
+FILES_DIR = os.getenv("FILES_DIR", "/app/files")
 
 router = APIRouter(tags=["base"])
 
@@ -12,7 +15,7 @@ def root():
 
 @router.get("/greet",
             summary="Greet Endpoint",
-            description="Return a welcome message for the user",
+            description="Return a, welcome message for the user",
             response_description="A personalised welcome message in JSON format")
 def greet_user(name:str):
     return {"message" : f"Hello {name}, welcome to the Events Manager API!"}

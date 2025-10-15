@@ -1,13 +1,7 @@
 import asyncpg
 import os
 
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME")
-
-DATABASE_URL = "postgresql://postgres:postgres@db:5432/giuliagargiulo"
+DATABASE_URL = os.getenv("DATABASE_URL", "got nothing")
 
 async def get_connection():
     return await asyncpg.connect(DATABASE_URL)
