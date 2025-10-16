@@ -1,14 +1,16 @@
-import asyncpg
 import os
+import databases
 
 DATABASE_URL = os.getenv("DATABASE_URL", "got nothing")
 
-async def get_connection():
-    return await asyncpg.connect(DATABASE_URL)
+database = databases.Database(DATABASE_URL)
 
 async def get_db():
-    db = await get_connection()
+    if not database.is_connected:
+        await database.connect()
     try:
-        yield db
+        yield database
     finally:
-        await db.close()
+        if database.is_connected:
+            await database.disconnect()
+            

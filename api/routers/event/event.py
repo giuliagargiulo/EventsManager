@@ -2,8 +2,8 @@ from typing import List
 from fastapi import APIRouter, Depends
 import os
 import uuid
+from databases import Database
 from api.database import get_db
-from asyncpg import Connection
 from pydantic import BaseModel, Field
 from datetime import date, time
 
@@ -36,6 +36,15 @@ class EventOut(Event):
                              description="UUID version 7 of the event",
                              example="123e4567-e89b-12d3-a456-426614174000")
 
+
+class EventBrief(BaseModel):
+    uu_id: uuid.UUID = Field(...,
+                             description="UUID version 7 of the event",
+                             example="123e4567-e89b-12d3-a456-426614174000")
+    name: str = Field(...,
+                      description="Name of the event",
+                      example="Tech Conference")
+
 # Save an event on a text file
 
 
@@ -58,12 +67,12 @@ def save_event_to_file(event: Event):
              summary="Create an Event",
              description="Create a new event in the database",
              response_description="A message indicating the result of the creation operation")
-async def create_event(event: Event, db: Connection = Depends(get_db)):
+async def create_event(event: Event, db: Database = Depends(get_db)):
     query = ("INSERT INTO tbl_event (name, event_date, location, start_time, end_time) "
-             "VALUES (%(name)s, %(event_date)s, %(location)s, %(start_time)s, %(end_time)s) "
+             "VALUES (:name, :event_date, :location, :start_time, :end_time) "
              "RETURNING uu_id;")
     q_data = event.dict()
-    row = await db.fetchrow(query, q_data)
+    row = await db.fetch_one(query, q_data)
     return {"message": "Event created successfully", "id": row['uu_id']}
 
 # READ
@@ -73,11 +82,11 @@ async def create_event(event: Event, db: Connection = Depends(get_db)):
             summary="Get All Events",
             description="Retrieve all events from the database",
             response_description="A list of events in JSON format",
-            response_model=List[EventOut])
-async def get_events(db: Connection = Depends(get_db)):
-    query = ("SELECT uu_id as fk_tbl_event, name "
+            response_model=List[EventBrief])
+async def get_events(db: Database = Depends(get_db)):
+    query = ("SELECT uu_id, name "
              "FROM tbl_event;")
-    records = await db.fetch(query)
+    records = await db.fetch_all(query)
     return [dict(record) for record in records]
 
 
@@ -86,12 +95,12 @@ async def get_events(db: Connection = Depends(get_db)):
             description="Retrieve a specific event by its ID from the database",
             response_description="An event in JSON format",
             response_model=EventOut)
-async def get_event(event_id: str, db: Connection = Depends(get_db)):
-    query = ("SELECT uu_id as fk_tbl_events, name, event_date, location, start_time, end_time "
+async def get_event(event_id: str, db: Database = Depends(get_db)):
+    query = ("SELECT name, event_date, location, start_time, end_time, uu_id "
              "FROM tbl_event te "
-             "WHERE uu_id = %(uu_id)s;")
+             "WHERE uu_id = :uu_id;")
     q_data = {"uu_id": event_id}
-    db_event = await db.fetchrow(query, q_data)
+    db_event = await db.fetch_one(query, q_data)
     if not db_event:
         return {"Error": "Event not found"}
     return dict(db_event)
@@ -103,21 +112,21 @@ async def get_event(event_id: str, db: Connection = Depends(get_db)):
             summary="Update an Event",
             description="Update an existing event in the database",
             response_description="A message indicating the result of the update operation")
-async def update_event(event_id: str, event: Event, db: Connection = Depends(get_db)):
+async def update_event(event_id: str, event: Event, db: Database = Depends(get_db)):
     q_data = {"uu_id": event_id}
     query = ("SELECT uu_id, name "
              "FROM tbl_event "
-             "WHERE uu_id = %(uu_id)s")
-    db_event = await db.fetchrow(query, q_data)
+             "WHERE uu_id = :uu_id;")
+    db_event = await db.fetch_one(query, q_data)
     if not db_event:
         return {"Error": "Event not found"}
     query = ("UPDATE tbl_event "
-             "SET name = %(name)s, "
-             "    event_date = %(event_date)s, "
-             "    location = %(location)s, "
-             "    start_time = %(start_time)s, "
-             "    end_time = %(end_time)s "
-             "WHERE uu_id = %(uu_id)s;")
+             "SET name = :name, "
+             "    event_date = :event_date, "
+             "    location = :location, "
+             "    start_time = :start_time, "
+             "    end_time = :end_time "
+             "WHERE uu_id = :uu_id;")
     q_data = {"name": event.name,
               "event_date": event.event_date,
               "location": event.location,
@@ -134,15 +143,15 @@ async def update_event(event_id: str, event: Event, db: Connection = Depends(get
                summary="Delete an Event",
                description="Delete an event from the database",
                response_description="A message indicating the result of the deletion operation")
-async def delete_event(event_id: str, db: Connection = Depends(get_db)):
+async def delete_event(event_id: str, db: Database = Depends(get_db)):
     query = ("SELECT uu_id "
              "FROM tbl_event "
-             "WHERE uu_id = %(uu_id)s;")
+             "WHERE uu_id = :uu_id;")
     q_data = {"uu_id": event_id}
-    db_event = await db.fetchrow(query, q_data)
+    db_event = await db.fetch_one(query, q_data)
     if not db_event:
         return {"Error": "Event not found"}
     query = ("DELETE FROM tbl_event "
-             "WHERE uu_id = %(uu_id)s;")
+             "WHERE uu_id = :uu_id;")
     await db.execute(query, q_data)
     return {"message": "Event deleted successfully"}

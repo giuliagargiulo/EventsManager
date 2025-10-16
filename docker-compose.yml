@@ -23,5 +23,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./api/routers/event/event.sql:/docker-entrypoint-initdb.d/event.sql
-      - ./api/routers/participant/participant.sql:/docker-entrypoint-initdb.d/participant.sql
+      - ./api/routers/participant/participant.sql:/docker-entrypoint-initdb.d/1-participant.sql
+      - ./api/routers/event/event.sql:/docker-entrypoint-initdb.d/2-event.sql
+     
