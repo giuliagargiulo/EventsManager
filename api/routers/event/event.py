@@ -72,7 +72,7 @@ async def create_event(event: Event, db: Database = Depends(get_db)):
              "VALUES (:name, :event_date, :location, :start_time, :end_time) "
              "RETURNING uu_id;")
     q_data = event.dict()
-    row = await db.fetch_one(query, q_data)
+    row = await db.fetch_one(query=query, values=q_data)
     return {"message": "Event created successfully", "id": row['uu_id']}
 
 # READ
@@ -100,7 +100,7 @@ async def get_event(event_id: str, db: Database = Depends(get_db)):
              "FROM tbl_event te "
              "WHERE uu_id = :uu_id;")
     q_data = {"uu_id": event_id}
-    db_event = await db.fetch_one(query, q_data)
+    db_event = await db.fetch_one(query=query, values=q_data)
     if not db_event:
         return {"Error": "Event not found"}
     return dict(db_event)
@@ -117,7 +117,7 @@ async def update_event(event_id: str, event: Event, db: Database = Depends(get_d
     query = ("SELECT uu_id, name "
              "FROM tbl_event "
              "WHERE uu_id = :uu_id;")
-    db_event = await db.fetch_one(query, q_data)
+    db_event = await db.fetch_one(query=query, values=q_data)
     if not db_event:
         return {"Error": "Event not found"}
     query = ("UPDATE tbl_event "
@@ -133,7 +133,7 @@ async def update_event(event_id: str, event: Event, db: Database = Depends(get_d
               "start_time": event.start_time,
               "end_time": event.end_time,
               "uu_id": event_id}
-    await db.execute(query, q_data)
+    await db.execute(query=query, values=q_data)
     return {"message": "Event updated successfully"}
 
 # DELETE
@@ -148,10 +148,10 @@ async def delete_event(event_id: str, db: Database = Depends(get_db)):
              "FROM tbl_event "
              "WHERE uu_id = :uu_id;")
     q_data = {"uu_id": event_id}
-    db_event = await db.fetch_one(query, q_data)
+    db_event = await db.fetch_one(query=query, values=q_data)
     if not db_event:
         return {"Error": "Event not found"}
     query = ("DELETE FROM tbl_event "
              "WHERE uu_id = :uu_id;")
-    await db.execute(query, q_data)
+    await db.execute(query=query, values=q_data)
     return {"message": "Event deleted successfully"}

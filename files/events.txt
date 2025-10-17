@@ -1,1 +1,3 @@
 Event:Event Date:20-11-2026 Location:Lisboa Start_Time:20:00 End_Time:22:00
+Event:Event2 Date:15-05-2026 Location:Coimbra Start_Time:19:00 End_Time:21:00
+Event:Event3 Date:10-06-2026 Location:Porto Start_Time:15:00 End_Time:18:00
